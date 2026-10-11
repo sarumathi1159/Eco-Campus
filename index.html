@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCampus Hub - Sustainable Campus Platform</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-emerald: #2ecc71;
+            --forest-green: #1b4332;
+            --mint-green: #d8f3dc;
+            --sage-bg: #f4f9f5;
+            --accent-gold: #ffd700;
+            --accent-silver: #c0c0c0;
+            --accent-bronze: #cd7f32;
+            --text-dark: #1f2937;
+        }
+
+        body {
+            font-family: Verdana, Geneva, sans-serif;
+            background-color: var(--sage-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Login Screen Overlay Styling */
+        #login-screen {
+            background: linear-gradient(135deg, rgba(27, 67, 50, 0.92), rgba(46, 204, 113, 0.85)), 
+                        url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            max-width: 480px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Navigation Bar */
+        .navbar-eco {
+            background-color: var(--forest-green);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .navbar-eco .navbar-brand, .navbar-eco .nav-link {
+            color: #ffffff !important;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .navbar-eco .nav-link:hover, .navbar-eco .nav-link.active {
+            color: var(--primary-emerald) !important;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+        }
+
+        /* Cards & Components */
+        .eco-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+        }
+
+        .eco-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        /* Leaderboard Badges */
+        .rank-gold {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: #fff;
+            font-weight: bold;
+        }
+        .rank-silver {
+            background: linear-gradient(135deg, #e0e0e0, #9e9e9e);
+            color: #fff;
+            font-weight: bold;
+        }
+        .rank-bronze {
+            background: linear-gradient(135deg, #e5a971, #cd7f32);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Calendar Grid Styling */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            background-color: var(--forest-green);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .calendar-day {
+            min-height: 95px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-day:hover {
+            border-color: var(--primary-emerald);
+            background-color: #f0f9f2;
+        }
+
+        .calendar-day .day-number {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .event-tag {
+            font-size: 0.7rem;
+            background-color: var(--mint-green);
+            color: var(--forest-green);
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+        }
+
+        /* Views Switching */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            background-color: var(--forest-green);
+            color: white;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. FULL LOGIN SCREEN (Default display until user authenticates) -->
+    <div id="login-screen">
+        <div class="login-card p-4 p-sm-5">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle p-3 mb-3" style="width: 70px; height: 70px;">
+                    <i class="fa-solid fa-leaf fs-1"></i>
+                </div>
+                <h3 class="fw-bold text-success mb-1">EcoCampus Hub</h3>
+                <p class="text-muted small">Sign in to access campus sustainability features</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLoginSubmit(event)">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Full Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-user text-muted"></i></span>
+                        <input type="text" class="form-control" id="login-name" placeholder="e.g. Alex Morgan" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Institutional ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-id-card text-muted"></i></span>
+                        <input type="text" class="form-control" id="login-id" placeholder="e.g. STU-2026-88" required>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small">Role</label>
+                        <select class="form-select" id="login-role" required>
+                            <option value="Student" selected>Student</option>
+                            <option value="Faculty/Staff">Faculty/Staff</option>
+                            <option value="Event Organizer">Event Organizer</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small">Department</label>
+                        <select class="form-select" id="login-dept" required>
+                            <option value="Computer Science" selected>Computer Science</option>
+                            <option value="Environmental Sci">Environmental Sci</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Biotechnology">Biotechnology</option>
+                            <option value="Business Admin">Business Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold rounded-pill shadow-sm mt-2">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i> Access EcoCampus
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION WORKSPACE (Hidden until login) -->
+    <div id="main-app" class="d-none">
+
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-xl navbar-dark navbar-eco sticky-top">
+            <div class="container-fluid px-3 px-lg-4">
+                <a class="navbar-brand d-flex align-items-center gap-2" onclick="switchView('dashboard')">
+                    <i class="fa-solid fa-leaf text-warning fs-4"></i>
+                    <span class="fw-bold fs-5">EcoCampus</span>
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ecoNavbar">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="ecoNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-xl-0 fs-6">
+                        <li class="nav-item"><a class="nav-link nav-btn active" id="nav-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-report" onclick="switchView('report')"><i class="fa-solid fa-circle-exclamation me-1"></i> Report Issue</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-history" onclick="switchView('history')"><i class="fa-solid fa-clock-rotate-left me-1"></i> Reported History</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-waste" onclick="switchView('waste')"><i class="fa-solid fa-recycle me-1"></i> Waste Guide</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-resources" onclick="switchView('resources')"><i class="fa-solid fa-lightbulb me-1"></i> Save Resources</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-challenges" onclick="switchView('challenges')"><i class="fa-solid fa-trophy me-1"></i> Green Challenges</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-leaderboard" onclick="switchView('leaderboard')"><i class="fa-solid fa-ranking-star me-1"></i> Leaderboard</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-planner" onclick="switchView('planner')"><i class="fa-solid fa-calendar-days me-1"></i> Event Planner</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-ideahub" onclick="switchView('ideahub')"><i class="fa-solid fa-seedling me-1"></i> Idea Hub</a></li>
+                        <li class="nav-item"><a class="nav-link nav-btn" id="nav-sharedideas" onclick="switchView('sharedideas')"><i class="fa-solid fa-comments me-1"></i> Shared Ideas</a></li>
+                    </ul>
+
+                    <!-- User Header Details -->
+                    <div class="d-flex align-items-center gap-3 text-white border-start ps-xl-3 mt-2 mt-xl-0">
+                        <div class="text-xl-end lh-sm">
+                            <div id="user-display-name" class="fw-bold">Guest User</div>
+                            <small id="user-display-role" class="text-warning" style="font-size: 0.75rem;">Student | Computer Science</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="handleLogout()">
+                            <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Workspace Body -->
+        <main class="container-fluid px-3 px-lg-4 py-4">
+
+            <!-- 1. SUSTAINABILITY DASHBOARD -->
+            <section id="view-dashboard" class="view-section active">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-gauge-high me-2"></i>Campus Sustainability Dashboard</h2>
+                        <p class="text-muted mb-0">Real-time environmental metrics and conservation trends</p>
+                    </div>
+                    <div>
+                        <select class="form-select form-select-sm" id="dashboard-filter-period" onchange="updateDashboardCharts()">
+                            <option value="month">Current Month (October)</option>
+                            <option value="quarter">Last Quarter</option>
+                            <option value="year">Academic Year 2026</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Score Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="eco-card p-3 border-start border-success border-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted fw-semibold">Waste Diverted</small>
+                                    <h3 class="fw-bold text-success mb-0">2,850 kg</h3>
+                                    <small class="text-success"><i class="fa-solid fa-arrow-up me-1"></i>+14% this month</small>
+                                </div>
+                                <div class="p-3 bg-success bg-opacity-10 rounded-circle text-success fs-3">
+                                    <i class="fa-solid fa-trash-arrow-up"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="eco-card p-3 border-start border-primary border-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted fw-semibold">Water Conserved</small>
+                                    <h3 class="fw-bold text-primary mb-0">52,400 L</h3>
+                                    <small class="text-primary"><i class="fa-solid fa-arrow-up me-1"></i>+9% vs target</small>
+                                </div>
+                                <div class="p-3 bg-primary bg-opacity-10 rounded-circle text-primary fs-3">
+                                    <i class="fa-solid fa-droplet"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="eco-card p-3 border-start border-warning border-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted fw-semibold">Energy Saved</small>
+                                    <h3 class="fw-bold text-warning mb-0">16,200 kWh</h3>
+                                    <small class="text-warning"><i class="fa-solid fa-bolt me-1"></i>Solar active</small>
+                                </div>
+                                <div class="p-3 bg-warning bg-opacity-10 rounded-circle text-warning fs-3">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="eco-card p-3 border-start border-info border-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted fw-semibold">Campus Eco Score</small>
+                                    <h3 class="fw-bold text-info mb-0">91.2 / 100</h3>
+                                    <small class="text-info"><i class="fa-solid fa-medal me-1"></i>Grade A+ (Gold Tier)</small>
+                                </div>
+                                <div class="p-3 bg-info bg-opacity-10 rounded-circle text-info fs-3">
+                                    <i class="fa-solid fa-leaf"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row g-4 mb-4">
+                    <div class="col-12 col-lg-7">
+                        <div class="eco-card p-4">
+                            <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-chart-line me-2"></i>Weekly Energy & Water Trend Line</h5>
+                            <div style="position: relative; height: 320px;">
+                                <canvas id="trendLineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <div class="eco-card p-4">
+                            <h5 class="fw-bold text-success mb-3"><i class="fa-solid fa-chart-pie me-2"></i>Waste Breakdown Ratio</h5>
+                            <div style="position: relative; height: 320px;">
+                                <canvas id="wastePieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. REPORT A PROBLEM -->
+            <section id="view-report" class="view-section">
+                <div class="mx-auto" style="max-width: 800px;">
+                    <div class="eco-card p-4 p-md-5">
+                        <h3 class="fw-bold text-success mb-2"><i class="fa-solid fa-triangle-exclamation me-2"></i>Report Campus Environmental Issue</h3>
+                        <p class="text-muted mb-4">Report leaks, energy waste, or improper waste disposal to Facilities Management.</p>
+
+                        <form id="report-problem-form" onsubmit="handleReportSubmit(event)">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Reporter Name</label>
+                                    <input type="text" class="form-control" id="rep-name" required placeholder="Full name">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Institutional ID</label>
+                                    <input type="text" class="form-control" id="rep-id" required placeholder="ID Number">
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Date of Incident</label>
+                                    <input type="date" class="form-control" id="rep-date" required>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Campus Location</label>
+                                    <select class="form-select" id="rep-location" required>
+                                        <option value="" disabled selected>Select Location</option>
+                                        <option value="Main Academic Block">Main Academic Block</option>
+                                        <option value="Science & Research Labs">Science & Research Labs</option>
+                                        <option value="Student Hostel Complex">Student Hostel Complex</option>
+                                        <option value="Central Library">Central Library</option>
+                                        <option value="Sports Complex & Grounds">Sports Complex & Grounds</option>
+                                        <option value="Campus Cafeteria">Campus Cafeteria</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Type of Wastage</label>
+                                    <select class="form-select" id="rep-category" required>
+                                        <option value="" disabled selected>Select Type</option>
+                                        <option value="Water Leakage / Wastage">Water Leakage / Wastage</option>
+                                        <option value="Electricity / Lights Left On">Electricity / Lights Left On</option>
+                                        <option value="Overflowing Waste Bins">Overflowing Waste Bins</option>
+                                        <option value="Plastic Accumulation">Plastic Accumulation</option>
+                                        <option value="E-Waste / Hazard">E-Waste / Hazard</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Urgency Level</label>
+                                    <select class="form-select" id="rep-urgency" required>
+                                        <option value="Low">Low - Informational</option>
+                                        <option value="Medium" selected>Medium - Attention Needed</option>
+                                        <option value="High">High - Immediate Action Required</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Details & Description</label>
+                                    <textarea class="form-control" id="rep-desc" rows="3" placeholder="Provide precise spot or details..." required></textarea>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Photo Evidence (Optional)</label>
+                                    <input type="file" class="form-control" id="rep-photo" accept="image/*" onchange="previewReportImage(this)">
+                                    <div id="report-img-preview" class="mt-2 d-none">
+                                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 140px;">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 text-end mt-4">
+                                    <button type="submit" class="btn btn-success px-4 py-2 rounded-pill fw-bold">
+                                        <i class="fa-solid fa-paper-plane me-2"></i> Submit Issue
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. REPORTED HISTORY -->
+            <section id="view-history" class="view-section">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-clock-rotate-left me-2"></i>Reported Issue History</h2>
+                        <p class="text-muted mb-0">Track all reported environmental concerns and their resolution status.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="history-type-filter" onchange="renderReportedHistory()">
+                            <option value="ALL">All Wastage Types</option>
+                            <option value="Water Leakage / Wastage">Water Leakage</option>
+                            <option value="Electricity / Lights Left On">Electricity</option>
+                            <option value="Overflowing Waste Bins">Waste Bins</option>
+                            <option value="Plastic Accumulation">Plastic</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="history-status-filter" onchange="renderReportedHistory()">
+                            <option value="ALL">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="eco-card p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Reporter</th>
+                                    <th>Type</th>
+                                    <th>Location</th>
+                                    <th>Urgency</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. WASTE GUIDE -->
+            <section id="view-waste" class="view-section">
+                <div class="mb-4">
+                    <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-recycle me-2"></i>Waste Separation & Disposal Guide</h2>
+                    <p class="text-muted mb-0">Explore campus guidelines for waste sorting and recycling protocols.</p>
+                </div>
+
+                <div class="row g-4" id="waste-cards-container">
+                    <!-- Dynamic Waste Cards -->
+                </div>
+            </section>
+
+            <!-- 5. SAVE RESOURCES -->
+            <section id="view-resources" class="view-section">
+                <div class="mb-4">
+                    <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-lightbulb me-2"></i>Daily Resource Saving Checklist</h2>
+                    <p class="text-muted mb-0">Check off daily sustainable actions to instantly earn Eco-Points!</p>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Electricity -->
+                    <div class="col-12 col-md-4">
+                        <div class="eco-card p-4 h-100 border-top border-warning border-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fa-solid fa-bolt text-warning fs-2 me-3"></i>
+                                <h4 class="fw-bold mb-0">Electricity</h4>
+                            </div>
+                            <p class="text-muted small">Conserve power across classrooms and dorms.</p>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip1" onchange="toggleResourceAction(10, this)">
+                                <label class="form-check-label small fw-semibold" for="tip1">
+                                    Switch off lights/AC when leaving empty rooms (+10 pts)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip2" onchange="toggleResourceAction(10, this)">
+                                <label class="form-check-label small fw-semibold" for="tip2">
+                                    Utilize daylight near campus windows (+10 pts)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip3" onchange="toggleResourceAction(15, this)">
+                                <label class="form-check-label small fw-semibold" for="tip3">
+                                    Unplug devices after full charge (+15 pts)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Water -->
+                    <div class="col-12 col-md-4">
+                        <div class="eco-card p-4 h-100 border-top border-primary border-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fa-solid fa-droplet text-primary fs-2 me-3"></i>
+                                <h4 class="fw-bold mb-0">Water</h4>
+                            </div>
+                            <p class="text-muted small">Preserve campus water supplies.</p>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip4" onchange="toggleResourceAction(10, this)">
+                                <label class="form-check-label small fw-semibold" for="tip4">
+                                    Turn off tap tightly when scrubbing hands (+10 pts)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip5" onchange="toggleResourceAction(15, this)">
+                                <label class="form-check-label small fw-semibold" for="tip5">
+                                    Use a reusable water flask (+15 pts)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip6" onchange="toggleResourceAction(20, this)">
+                                <label class="form-check-label small fw-semibold" for="tip6">
+                                    Report leaking taps promptly (+20 pts)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paper & Plastic -->
+                    <div class="col-12 col-md-4">
+                        <div class="eco-card p-4 h-100 border-top border-success border-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fa-solid fa-tree text-success fs-2 me-3"></i>
+                                <h4 class="fw-bold mb-0">Paper & Plastic</h4>
+                            </div>
+                            <p class="text-muted small">Promote paperless and zero-plastic habits.</p>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip7" onchange="toggleResourceAction(10, this)">
+                                <label class="form-check-label small fw-semibold" for="tip7">
+                                    Submit assignments digitally (+10 pts)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip8" onchange="toggleResourceAction(15, this)">
+                                <label class="form-check-label small fw-semibold" for="tip8">
+                                    Print double-sided when physical copies are required (+15 pts)
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input resource-check" type="checkbox" id="tip9" onchange="toggleResourceAction(15, this)">
+                                <label class="form-check-label small fw-semibold" for="tip9">
+                                    Refuse single-use cutlery at the cafeteria (+15 pts)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. GREEN CHALLENGES -->
+            <section id="view-challenges" class="view-section">
+                <div class="mb-4">
+                    <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-trophy me-2"></i>Campus Green Challenges</h2>
+                    <p class="text-muted mb-0">Complete challenges, upload proof, and earn points on the leaderboard!</p>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Challenge 1 -->
+                    <div class="col-12 col-lg-6">
+                        <div class="eco-card p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-seedling me-1"></i> +100 Eco Points</span>
+                                <span class="text-muted small"><i class="fa-regular fa-clock me-1"></i>Active Challenge</span>
+                            </div>
+                            <h4 class="fw-bold text-success">Plant a Sapling Drive</h4>
+                            <p class="text-muted">Plant a tree/sapling on campus grounds and submit photo proof.</p>
+
+                            <form id="challenge-form-sapling" onsubmit="handleChallengeSubmit(event, 'Plant a Sapling', 100)">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm" id="sapling-name" placeholder="Participant Name" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm" id="sapling-id" placeholder="ID Number" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm" placeholder="Tree/Plant Type" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm" placeholder="Location Planted" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold">Photo Proof</label>
+                                        <input type="file" class="form-control form-control-sm" accept="image/*" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold rounded-pill">Submit Sapling Challenge</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Challenge 2 -->
+                    <div class="col-12 col-lg-6">
+                        <div class="eco-card p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <span class="badge bg-primary px-3 py-2 rounded-pill"><i class="fa-solid fa-bottle-water me-1"></i> +50 Eco Points</span>
+                                <span class="text-muted small"><i class="fa-regular fa-clock me-1"></i>Active Challenge</span>
+                            </div>
+                            <h4 class="fw-bold text-primary">Zero Single-Use Plastic Week</h4>
+                            <p class="text-muted">Avoid single-use plastic for a week. Upload proof of your reusable alternatives!</p>
+
+                            <form id="challenge-form-plastic" onsubmit="handleChallengeSubmit(event, 'Zero Plastic Hero', 50)">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm" id="plastic-name" placeholder="Participant Name" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control form-control-sm" id="plastic-id" placeholder="ID Number" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <input type="text" class="form-control form-control-sm" placeholder="Eco Alternative (e.g. Stainless Bottle)" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold">Photo Proof</label>
+                                        <input type="file" class="form-control form-control-sm" accept="image/*" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold rounded-pill">Submit Plastic Challenge</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. LEADERBOARD -->
+            <section id="view-leaderboard" class="view-section">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-ranking-star me-2"></i>Campus Eco Leaderboard</h2>
+                    <p class="text-muted mb-0">Recognizing sustainability champions across campus!</p>
+                </div>
+
+                <div class="alert bg-success bg-opacity-10 border-success d-flex align-items-center justify-content-between mb-4 p-3 rounded-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-award fs-1 text-success"></i>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-success">Your Eco Performance</h6>
+                            <span class="small text-muted" id="user-rank-status">Student | 150 Eco-Points</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="triggerConfetti()">Celebrate!</button>
+                </div>
+
+                <ul class="nav nav-pills justify-content-center mb-4" id="leaderboardTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-students">Student Ranking</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-faculty">Faculty Ranking</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="leaderboardTabContent">
+                    <div class="tab-pane fade show active" id="tab-students">
+                        <div class="eco-card p-3">
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 80px;">Rank</th>
+                                            <th>Student Name</th>
+                                            <th>ID</th>
+                                            <th>Department</th>
+                                            <th>Badges</th>
+                                            <th class="text-end">Eco Points</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="student-leaderboard-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-faculty">
+                        <div class="eco-card p-3">
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 80px;">Rank</th>
+                                            <th>Faculty Name</th>
+                                            <th>ID</th>
+                                            <th>Department</th>
+                                            <th>Badges</th>
+                                            <th class="text-end">Eco Points</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="faculty-leaderboard-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. GREEN EVENT PLANNER -->
+            <section id="view-planner" class="view-section">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-calendar-days me-2"></i>Green Event Planner</h2>
+                        <p class="text-muted mb-0">Organize and discover eco-friendly workshops, drives, and seminars.</p>
+                    </div>
+                    <button class="btn btn-success fw-bold rounded-pill" onclick="openOrganizeModal()">
+                        <i class="fa-solid fa-plus me-1"></i> Organize Eco Event
+                    </button>
+                </div>
+
+                <div class="eco-card p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold text-success mb-0" id="calendar-month-year">October 2026</h4>
+                        <span class="badge bg-success">Click date to inspect event</span>
+                    </div>
+
+                    <div class="calendar-grid mb-2">
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendar-days-grid">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. IDEA HUB -->
+            <section id="view-ideahub" class="view-section">
+                <div class="mx-auto" style="max-width: 800px;">
+                    <div class="eco-card p-4 p-md-5">
+                        <h3 class="fw-bold text-success mb-2"><i class="fa-solid fa-lightbulb me-2"></i>Propose a Sustainable Idea</h3>
+                        <p class="text-muted mb-4">Propose innovative solutions to save energy, reduce waste, or green our campus.</p>
+
+                        <form id="idea-hub-form" onsubmit="handleIdeaSubmit(event)">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Author Name</label>
+                                    <input type="text" class="form-control" id="idea-author" required placeholder="Your name">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold">Student / Institutional ID</label>
+                                    <input type="text" class="form-control" id="idea-author-id" required placeholder="ID Number">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Problem Statement</label>
+                                    <input type="text" class="form-control" id="idea-problem" placeholder="e.g. Excessive paper waste during mid-term exams" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Solution Idea</label>
+                                    <textarea class="form-control" id="idea-solution" rows="4" placeholder="Detail your solution, resources needed, and expected impact..." required></textarea>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="submit" class="btn btn-success px-4 py-2 rounded-pill fw-bold">
+                                        <i class="fa-solid fa-share me-2"></i> Submit Proposal
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. SHARED IDEAS -->
+            <section id="view-sharedideas" class="view-section">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold text-success mb-1"><i class="fa-solid fa-comments me-2"></i>Community Eco Ideas</h2>
+                        <p class="text-muted mb-0">Upvote and explore ideas submitted by students and faculty.</p>
+                    </div>
+                    <div style="min-width: 260px;">
+                        <input type="text" class="form-control form-control-sm" id="idea-search-input" placeholder="Search ideas..." onkeyup="renderSharedIdeas()">
+                    </div>
+                </div>
+
+                <div class="row g-4" id="shared-ideas-grid">
+                    <!-- Dynamic shared ideas -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="py-3 text-center">
+            <div class="container">
+                <small>© 2026 EcoCampus Hub — Empowering Sustainable Campus Communities.</small>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Event Detail Modal -->
+    <div class="modal fade" id="eventDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 eco-card">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold" id="event-modal-title">Event Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="event-modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organize Event Modal -->
+    <div class="modal fade" id="organizeEventModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 eco-card">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-calendar-plus me-2"></i>Organize Eco Event</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="organize-event-form" onsubmit="handleOrganizeEventSubmit(event)">
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Organizer Name</label>
+                            <input type="text" class="form-control form-control-sm" id="org-name" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Event Title</label>
+                            <input type="text" class="form-control form-control-sm" id="org-event-title" required>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Day (October)</label>
+                                <input type="number" class="form-control form-control-sm" id="org-date" min="1" max="31" placeholder="1-31" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Time</label>
+                                <input type="time" class="form-control form-control-sm" id="org-time" required>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Location</label>
+                            <input type="text" class="form-control form-control-sm" id="org-loc" placeholder="e.g. Campus Lawn" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Contact Email/Phone</label>
+                            <input type="text" class="form-control form-control-sm" id="org-contact" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Event Description</label>
+                            <textarea class="form-control form-control-sm" id="org-desc" rows="2" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-bold rounded-pill">Publish Event</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waste Guide Detail Modal -->
+    <div class="modal fade" id="wasteDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 eco-card">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold" id="waste-modal-title">Waste Category</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="waste-modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="ecoToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toast-message">Action completed successfully!</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // GLOBAL APP STATE
+        let currentUser = null;
+
+        let reportsList = JSON.parse(localStorage.getItem('eco_reports')) || [
+            { id: 1, date: '2026-10-02', reporter: 'Alex Morgan', location: 'Main Academic Block', category: 'Water Leakage / Wastage', urgency: 'High', status: 'In Review', desc: 'Leaking pipe on 2nd floor bathroom.' },
+            { id: 2, date: '2026-10-05', reporter: 'Dr. Sarah Smith', location: 'Science & Research Labs', category: 'Electricity / Lights Left On', urgency: 'Medium', status: 'Resolved', desc: 'Lab lights left on overnight.' }
+        ];
+
+        let sharedIdeas = JSON.parse(localStorage.getItem('eco_ideas')) || [
+            { id: 1, author: 'Alex Morgan', authorId: 'STU-2026-88', problem: 'Excess single-use coffee cups at canteen.', solution: 'Stainless steel tumbler rental program with a $0.50 discount refill.', likes: 18 },
+            { id: 2, author: 'Prof. David Vance', authorId: 'FAC-2026-04', problem: 'Water loss during afternoon irrigation.', solution: 'Smart soil-moisture sensors connected to drip systems.', likes: 32 }
+        ];
+
+        let eventsList = JSON.parse(localStorage.getItem('eco_events')) || [
+            { day: 6, name: 'Campus Tree Plantation Drive', time: '10:00 AM', location: 'North Lawn', organizer: 'Green Club', contact: 'green@campus.edu', desc: 'Join us to plant 50 native trees across the north campus.', poster: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80' },
+            { day: 14, name: 'E-Waste Recycling Workshop', time: '02:00 PM', location: 'Student Activity Center', organizer: 'Eco Club', contact: 'eco@campus.edu', desc: 'Safe disposal and recycling of dead electronics.', poster: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80' },
+            { day: 22, name: 'Solar Energy & Innovation Seminar', time: '11:30 AM', location: 'Auditorium B', organizer: 'Engineering Dept', contact: 'eng@campus.edu', desc: 'Discussion on campus renewable power grids.', poster: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=600&q=80' }
+        ];
+
+        let leaderboardStudents = [
+            { rank: 1, name: "Emily Watson", id: "STU-2026-01", dept: "Environmental Sci", points: 480, badge: "rank-gold" },
+            { rank: 2, name: "Jason Miller", id: "STU-2026-12", dept: "Computer Science", points: 390, badge: "rank-silver" },
+            { rank: 3, name: "Priya Patel", id: "STU-2026-45", dept: "Biotechnology", points: 320, badge: "rank-bronze" }
+        ];
+
+        let leaderboardFaculty = [
+            { rank: 1, name: "Prof. David Vance", id: "FAC-2026-04", dept: "Engineering", points: 540, badge: "rank-gold" },
+            { rank: 2, name: "Dr. Sarah Smith", id: "FAC-2026-11", dept: "Environmental Sci", points: 430, badge: "rank-silver" },
+            { rank: 3, name: "Dr. Robert Chen", id: "FAC-2026-09", dept: "Computer Science", points: 295, badge: "rank-bronze" }
+        ];
+
+        // Waste Categories Rules Definition
+        const wasteCategories = [
+            { id: 'dry', title: 'Dry Recyclables', icon: 'fa-box-archive', color: 'info', desc: 'Clean paper, cardboard boxes, aluminum cans, dry plastics.', tips: 'Ensure materials are clean and dry before placing in Blue Bins.' },
+            { id: 'wet', title: 'Wet & Organic Waste', icon: 'fa-apple-whole', color: 'success', desc: 'Food scraps, coffee grounds, garden clippings, fruit peels.', tips: 'Dispose in Green Compost Bins. Do not mix with plastic wrappers.' },
+            { id: 'ewaste', title: 'E-Waste', icon: 'fa-plug', color: 'primary', desc: 'Dead batteries, old wires, broken laptops, circuit boards.', tips: 'Deposit at designated E-Waste kiosk inside Student Activity Center.' },
+            { id: 'hazardous', title: 'Hazardous Waste', icon: 'fa-biohazard', color: 'danger', desc: 'Lab chemicals, solvent bottles, fluorescent bulbs.', tips: 'Requires lab safety clearance and chemical disposal protocol.' },
+            { id: 'plastic', title: 'Hazardous Plastic', icon: 'fa-bottle-water', color: 'warning', desc: 'Contaminated medical or chemical plastic containers.', tips: 'Dispose in special Yellow Sealed Bins. Wash thoroughly if non-toxic.' }
+        ];
+
+        // Chart References
+        let trendLineChartInstance = null;
+        let wastePieChartInstance = null;
+
+        // INITIALIZATION: Always show login screen on site load
+        window.onload = function() {
+            showLoginScreen();
+        };
+
+        // LOGIN / LOGOUT FLOW
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('login-name').value.trim();
+            const id = document.getElementById('login-id').value.trim();
+            const role = document.getElementById('login-role').value;
+            const dept = document.getElementById('login-dept').value;
+
+            if (!name || !id) {
+                alert("Please fill in all required user fields.");
+                return;
+            }
+
+            currentUser = { name, id, role, dept, points: 120 };
+            
+            showMainApp();
+            showToast(`Welcome, ${currentUser.name}! Signed in as ${currentUser.role}.`);
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-screen').classList.remove('d-none');
+            document.getElementById('main-app').classList.add('d-none');
+            document.getElementById('login-form').reset();
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').classList.add('d-none');
+            document.getElementById('main-app').classList.remove('d-none');
+
+            updateUserHeaderDisplay();
+            renderReportedHistory();
+            renderWasteGuideCards();
+            renderCalendar();
+            renderSharedIdeas();
+            syncUserToLeaderboard();
+            
+            setTimeout(() => {
+                initDashboardCharts();
+            }, 100);
+        }
+
+        function updateUserHeaderDisplay() {
+            if (!currentUser) return;
+            document.getElementById('user-display-name').innerText = currentUser.name;
+            document.getElementById('user-display-role').innerText = `${currentUser.role} | ${currentUser.dept}`;
+            document.getElementById('user-rank-status').innerText = `${currentUser.role} (${currentUser.dept}) | ${currentUser.points} Eco-Points`;
+
+            // Auto-fill forms
+            if (document.getElementById('rep-name')) document.getElementById('rep-name').value = currentUser.name;
+            if (document.getElementById('rep-id')) document.getElementById('rep-id').value = currentUser.id;
+            if (document.getElementById('sapling-name')) document.getElementById('sapling-name').value = currentUser.name;
+            if (document.getElementById('sapling-id')) document.getElementById('sapling-id').value = currentUser.id;
+            if (document.getElementById('plastic-name')) document.getElementById('plastic-name').value = currentUser.name;
+            if (document.getElementById('plastic-id')) document.getElementById('plastic-id').value = currentUser.id;
+            if (document.getElementById('idea-author')) document.getElementById('idea-author').value = currentUser.name;
+            if (document.getElementById('idea-author-id')) document.getElementById('idea-author-id').value = currentUser.id;
+        }
+
+        // SPA VIEW SWITCHER
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            const targetView = document.getElementById('view-' + viewId);
+            const targetNav = document.getElementById('nav-' + viewId);
+
+            if (targetView) targetView.classList.add('active');
+            if (targetNav) targetNav.classList.add('active');
+
+            if (viewId === 'leaderboard') {
+                triggerConfetti();
+            }
+
+            if (viewId === 'dashboard' && trendLineChartInstance) {
+                setTimeout(() => { updateDashboardCharts(); }, 100);
+            }
+        }
+
+        // DASHBOARD CHARTS
+        function initDashboardCharts() {
+            if (trendLineChartInstance) trendLineChartInstance.destroy();
+            if (wastePieChartInstance) wastePieChartInstance.destroy();
+
+            const ctxLine = document.getElementById('trendLineChart').getContext('2d');
+            trendLineChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4', 'Wk 5', 'Wk 6'],
+                    datasets: [
+                        { label: 'Water Conserved (kL)', data: [8, 12, 15, 22, 28, 35], borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', fill: true, tension: 0.3 },
+                        { label: 'Energy Saved (kWh)', data: [2100, 3200, 4500, 6100, 8400, 9800], borderColor: '#ffc107', backgroundColor: 'rgba(255,193,7,0.1)', fill: true, tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            const ctxPie = document.getElementById('wastePieChart').getContext('2d');
+            wastePieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dry Recyclables', 'Wet & Organic', 'E-Waste', 'Hazardous Plastic', 'Others'],
+                    datasets: [{
+                        data: [35, 40, 10, 10, 5],
+                        backgroundColor: ['#0dcaf0', '#198754', '#0d6efd', '#ffc107', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function updateDashboardCharts() {
+            if (!trendLineChartInstance) return;
+            const period = document.getElementById('dashboard-filter-period').value;
+            if (period === 'month') {
+                trendLineChartInstance.data.datasets[0].data = [8, 12, 15, 22, 28, 35];
+                trendLineChartInstance.data.datasets[1].data = [2100, 3200, 4500, 6100, 8400, 9800];
+            } else {
+                trendLineChartInstance.data.datasets[0].data = [5, 10, 20, 30, 42, 55];
+                trendLineChartInstance.data.datasets[1].data = [1800, 2900, 5000, 7200, 10100, 12500];
+            }
+            trendLineChartInstance.update();
+        }
+
+        // REPORT ISSUE & HISTORY
+        function previewReportImage(input) {
+            const container = document.getElementById('report-img-preview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    container.querySelector('img').src = e.target.result;
+                    container.classList.remove('d-none');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function handleReportSubmit(e) {
+            e.preventDefault();
+            const newReport = {
+                id: Date.now(),
+                date: document.getElementById('rep-date').value,
+                reporter: document.getElementById('rep-name').value,
+                category: document.getElementById('rep-category').value,
+                location: document.getElementById('rep-location').value,
+                urgency: document.getElementById('rep-urgency').value,
+                status: 'Pending',
+                desc: document.getElementById('rep-desc').value
+            };
+
+            reportsList.unshift(newReport);
+            localStorage.setItem('eco_reports', JSON.stringify(reportsList));
+
+            document.getElementById('report-problem-form').reset();
+            document.getElementById('report-img-preview').classList.add('d-none');
+            updateUserHeaderDisplay();
+
+            showToast("Issue report submitted successfully!");
+            renderReportedHistory();
+            switchView('history');
+        }
+
+        function renderReportedHistory() {
+            const tbody = document.getElementById('history-table-body');
+            const statusFilter = document.getElementById('history-status-filter').value;
+            const typeFilter = document.getElementById('history-type-filter').value;
+            tbody.innerHTML = '';
+
+            let filtered = reportsList;
+            if (statusFilter !== 'ALL') {
+                filtered = filtered.filter(r => r.status === statusFilter);
+            }
+            if (typeFilter !== 'ALL') {
+                filtered = filtered.filter(r => r.category === typeFilter);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No report records found matching filter.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                let statusBadge = 'bg-warning text-dark';
+                if (item.status === 'In Review') statusBadge = 'bg-info text-dark';
+                if (item.status === 'Resolved') statusBadge = 'bg-success';
+
+                let urgencyBadge = item.urgency === 'High' ? 'text-danger fw-bold' : 'text-secondary';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="small">${item.date}</td>
+                    <td class="fw-semibold">${item.reporter}</td>
+                    <td><span class="badge bg-light text-dark border">${item.category}</span></td>
+                    <td>${item.location}</td>
+                    <td class="${urgencyBadge}">${item.urgency}</td>
+                    <td><span class="badge ${statusBadge}">${item.status}</span></td>
+                    <td><small class="text-muted">${item.desc}</small></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // WASTE GUIDE
+        function renderWasteGuideCards() {
+            const container = document.getElementById('waste-cards-container');
+            container.innerHTML = '';
+
+            wasteCategories.forEach(cat => {
+                const col = document.createElement('div');
+                col.className = 'col-12 col-sm-6 col-md-4';
+                col.innerHTML = `
+                    <div class="eco-card p-4 h-100 text-center cursor-pointer" onclick="openWasteModal('${cat.id}')">
+                        <i class="fa-solid ${cat.icon} text-${cat.color} display-4 mb-3"></i>
+                        <h5 class="fw-bold text-${cat.color}">${cat.title}</h5>
+                        <p class="text-muted small">${cat.desc}</p>
+                        <button class="btn btn-sm btn-outline-${cat.color} rounded-pill mt-2 fw-bold">View Protocol</button>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function openWasteModal(catId) {
+            const item = wasteCategories.find(c => c.id === catId);
+            if (!item) return;
+
+            document.getElementById('waste-modal-title').innerText = item.title;
+            document.getElementById('waste-modal-body').innerHTML = `
+                <div class="text-center mb-3">
+                    <i class="fa-solid ${item.icon} text-${item.color} display-3"></i>
+                </div>
+                <h6 class="fw-bold">Description & Examples:</h6>
+                <p class="text-muted">${item.desc}</p>
+                <h6 class="fw-bold mt-3">Disposal Rules & Protocols:</h6>
+                <p class="alert alert-${item.color}">${item.tips}</p>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('wasteDetailModal'));
+            modal.show();
+        }
+
+        // RESOURCE ACTIONS & POINTS
+        function toggleResourceAction(pts, checkbox) {
+            if (!currentUser) return;
+            if (checkbox.checked) {
+                currentUser.points += pts;
+                showToast(`+${pts} Eco-Points added! Total: ${currentUser.points}`);
+            } else {
+                currentUser.points -= pts;
+            }
+            updateUserHeaderDisplay();
+            syncUserToLeaderboard();
+        }
+
+        function handleChallengeSubmit(e, challengeName, points) {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            currentUser.points += points;
+
+            updateUserHeaderDisplay();
+            syncUserToLeaderboard();
+            showToast(`Challenge "${challengeName}" submitted! +${points} Eco-Points earned!`);
+            e.target.reset();
+            updateUserHeaderDisplay();
+        }
+
+        function syncUserToLeaderboard() {
+            if (!currentUser) return;
+
+            const isFaculty = currentUser.role.includes('Faculty');
+            const targetList = isFaculty ? leaderboardFaculty : leaderboardStudents;
+
+            const existingIdx = targetList.findIndex(u => u.id === currentUser.id || u.name === currentUser.name);
+            if (existingIdx !== -1) {
+                targetList[existingIdx].points = currentUser.points;
+                targetList[existingIdx].dept = currentUser.dept;
+            } else {
+                targetList.push({
+                    rank: 0,
+                    name: currentUser.name,
+                    id: currentUser.id,
+                    dept: currentUser.dept,
+                    points: currentUser.points,
+                    badge: ""
+                });
+            }
+
+            renderLeaderboards();
+        }
+
+        function renderLeaderboards() {
+            // Sort & Assign Badges for Students
+            leaderboardStudents.sort((a, b) => b.points - a.points);
+            leaderboardStudents.forEach((s, idx) => {
+                s.rank = idx + 1;
+                s.badge = idx === 0 ? 'rank-gold' : idx === 1 ? 'rank-silver' : idx === 2 ? 'rank-bronze' : '';
+            });
+
+            const studentBody = document.getElementById('student-leaderboard-body');
+            studentBody.innerHTML = '';
+            leaderboardStudents.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge ${s.badge ? s.badge : 'bg-secondary'} rounded-circle p-2">${s.rank}</span></td>
+                    <td class="fw-bold">${s.name} ${currentUser && s.id === currentUser.id ? '(You)' : ''}</td>
+                    <td class="text-muted small">${s.id}</td>
+                    <td>${s.dept}</td>
+                    <td><i class="fa-solid fa-leaf text-success me-1"></i>Eco Champion</td>
+                    <td class="text-end fw-bold text-success">${s.points} pts</td>
+                `;
+                studentBody.appendChild(tr);
+            });
+
+            // Sort & Assign Badges for Faculty
+            leaderboardFaculty.sort((a, b) => b.points - a.points);
+            leaderboardFaculty.forEach((f, idx) => {
+                f.rank = idx + 1;
+                f.badge = idx === 0 ? 'rank-gold' : idx === 1 ? 'rank-silver' : idx === 2 ? 'rank-bronze' : '';
+            });
+
+            const facultyBody = document.getElementById('faculty-leaderboard-body');
+            facultyBody.innerHTML = '';
+            leaderboardFaculty.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge ${f.badge ? f.badge : 'bg-secondary'} rounded-circle p-2">${f.rank}</span></td>
+                    <td class="fw-bold">${f.name} ${currentUser && f.id === currentUser.id ? '(You)' : ''}</td>
+                    <td class="text-muted small">${f.id}</td>
+                    <td>${f.dept}</td>
+                    <td><i class="fa-solid fa-seedling text-primary me-1"></i>Green Mentor</td>
+                    <td class="text-end fw-bold text-success">${f.points} pts</td>
+                `;
+                facultyBody.appendChild(tr);
+            });
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 90,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // EVENT PLANNER & CALENDAR
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-days-grid');
+            grid.innerHTML = '';
+
+            const paddingDays = 4; // October 2026 starts on Thursday
+            const totalDays = 31;
+
+            for (let i = 0; i < paddingDays; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day bg-light opacity-50';
+                grid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                dayCell.onclick = () => inspectCalendarDay(day);
+
+                let eventMarkup = '';
+                const dayEvents = eventsList.filter(e => parseInt(e.day) === day);
+                dayEvents.forEach(ev => {
+                    eventMarkup += `<span class="event-tag">${ev.name}</span>`;
+                });
+
+                dayCell.innerHTML = `
+                    <div class="day-number">${day}</div>
+                    ${eventMarkup}
+                `;
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function inspectCalendarDay(day) {
+            const dayEvents = eventsList.filter(e => parseInt(e.day) === day);
+            const modalTitle = document.getElementById('event-modal-title');
+            const modalBody = document.getElementById('event-modal-body');
+
+            modalTitle.innerText = `Events on Oct ${day}, 2026`;
+
+            if (dayEvents.length === 0) {
+                modalBody.innerHTML = `
+                    <p class="text-muted">No scheduled sustainability events on this date.</p>
+                    <button class="btn btn-success btn-sm rounded-pill mt-2" onclick="openOrganizeModalForDay(${day})">
+                        + Schedule Event for Oct ${day}
+                    </button>
+                `;
+            } else {
+                let html = '';
+                dayEvents.forEach(ev => {
+                    const posterImg = ev.poster ? `<img src="${ev.poster}" class="img-fluid rounded mb-2" style="max-height: 180px; width: 100%; object-fit: cover;">` : '';
+                    html += `
+                        <div class="p-3 border rounded mb-3 bg-light">
+                            ${posterImg}
+                            <h5 class="fw-bold text-success mb-1">${ev.name}</h5>
+                            <small class="text-muted d-block mb-2"><i class="fa-regular fa-clock me-1"></i>${ev.time} | Location: ${ev.location}</small>
+                            <p class="mb-2 small">${ev.desc}</p>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between small text-secondary">
+                                <span><strong>Organizer:</strong> ${ev.organizer}</span>
+                                <span><strong>Contact:</strong> ${ev.contact}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                modalBody.innerHTML = html;
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
+            modal.show();
+        }
+
+        function openOrganizeModal() {
+            const modal = new bootstrap.Modal(document.getElementById('organizeEventModal'));
+            modal.show();
+        }
+
+        function openOrganizeModalForDay(day) {
+            const detailModalEl = document.getElementById('eventDetailModal');
+            const detailModal = bootstrap.Modal.getInstance(detailModalEl);
+            if (detailModal) detailModal.hide();
+
+            document.getElementById('org-date').value = day;
+            openOrganizeModal();
+        }
+
+        function handleOrganizeEventSubmit(e) {
+            e.preventDefault();
+            const day = parseInt(document.getElementById('org-date').value);
+            const newEvent = {
+                day: day,
+                name: document.getElementById('org-event-title').value,
+                time: document.getElementById('org-time').value,
+                location: document.getElementById('org-loc').value,
+                organizer: document.getElementById('org-name').value,
+                contact: document.getElementById('org-contact').value,
+                desc: document.getElementById('org-desc').value,
+                poster: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80'
+            };
+
+            eventsList.push(newEvent);
+            localStorage.setItem('eco_events', JSON.stringify(eventsList));
+
+            renderCalendar();
+            document.getElementById('organize-event-form').reset();
+
+            const modalEl = document.getElementById('organizeEventModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            showToast("Event successfully organized and posted to calendar!");
+        }
+
+        // IDEA HUB & SHARED IDEAS
+        function handleIdeaSubmit(e) {
+            e.preventDefault();
+            const newIdea = {
+                id: Date.now(),
+                author: document.getElementById('idea-author').value,
+                authorId: document.getElementById('idea-author-id').value,
+                problem: document.getElementById('idea-problem').value,
+                solution: document.getElementById('idea-solution').value,
+                likes: 1
+            };
+
+            sharedIdeas.unshift(newIdea);
+            localStorage.setItem('eco_ideas', JSON.stringify(sharedIdeas));
+
+            document.getElementById('idea-hub-form').reset();
+            updateUserHeaderDisplay();
+            showToast("Your proposal has been posted!");
+            renderSharedIdeas();
+            switchView('sharedideas');
+        }
+
+        function renderSharedIdeas() {
+            const container = document.getElementById('shared-ideas-grid');
+            const searchVal = (document.getElementById('idea-search-input')?.value || '').toLowerCase();
+            container.innerHTML = '';
+
+            const filteredIdeas = sharedIdeas.filter(i => 
+                i.problem.toLowerCase().includes(searchVal) || 
+                i.solution.toLowerCase().includes(searchVal) ||
+                i.author.toLowerCase().includes(searchVal)
+            );
+
+            if (filteredIdeas.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center text-muted py-5">No ideas match your search query.</div>`;
+                return;
+            }
+
+            filteredIdeas.forEach(idea => {
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-6';
+                col.innerHTML = `
+                    <div class="eco-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-1">Proposal</span>
+                                <small class="text-muted">${idea.authorId}</small>
+                            </div>
+                            <h5 class="fw-bold text-success mb-2">${idea.problem}</h5>
+                            <p class="text-muted small mb-3"><strong>Solution:</strong> ${idea.solution}</p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2">
+                            <small class="fw-semibold text-secondary"><i class="fa-solid fa-user-pen me-1"></i>${idea.author}</small>
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="upvoteIdea(${idea.id}, this)">
+                                <i class="fa-solid fa-thumbs-up me-1"></i> Upvote (<span class="like-count">${idea.likes}</span>)
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function upvoteIdea(id, btn) {
+            const idea = sharedIdeas.find(i => i.id === id);
+            if (idea) {
+                idea.likes += 1;
+                btn.querySelector('.like-count').innerText = idea.likes;
+                localStorage.setItem('eco_ideas', JSON.stringify(sharedIdeas));
+                showToast("Idea upvoted!");
+            }
+        }
+
+        // TOAST UTILITY
+        function showToast(message) {
+            document.getElementById('toast-message').innerText = message;
+            const toastEl = document.getElementById('ecoToast');
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
+</body>
+</html>
